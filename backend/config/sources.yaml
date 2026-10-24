@@ -66,7 +66,7 @@ categories:
       - https://www.tagesschau.de/xml/rss2/
       # Local news: Google News' public RSS search, which links to the original publishers.
       - https://news.google.com/rss/search?q=Koblenz+OR+Vallendar&hl=de&gl=DE&ceid=DE:de
-      - https://news.google.com/rss/search?q=Rheinland-Pfalz+Landesregierung&hl=de&gl=DE&ceid=DE:de
+      - https://news.google.com/rss/search?q=Rheinland-Pfalz&hl=de&gl=DE&ceid=DE:de
 
   - slug: politics
     name: Politics
@@ -156,7 +156,6 @@ categories:
       industry shifts, M&A, regulation, supply chains, market entry, pricing
       power, geopolitics affecting companies. Frame each with a consulting lens.
     feeds:
-      - https://hbr.org/feed
       - https://knowledge.wharton.upenn.edu/feed/
       - https://www.economist.com/the-world-this-week/rss.xml
 

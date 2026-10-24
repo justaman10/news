@@ -10,6 +10,8 @@ from __future__ import annotations
 import json
 import logging
 import os
+import time
+import urllib.error
 import urllib.request
 from datetime import datetime, timedelta, timezone
 
@@ -123,16 +125,25 @@ def thesportsdb(settings: Settings, now: datetime) -> list[dict]:
         return []
     key = os.environ.get("THESPORTSDB_KEY") or "123"
     events, seen = [], set()
+    first = True
     for lg in cfg.leagues:
-        for offset in range(-1, 3):           # stays well under the free 30 requests/min
-            day = (now + timedelta(days=offset)).date().isoformat()
-            data = _get_json(f"https://www.thesportsdb.com/api/v1/json/{key}/eventsday.php?d={day}&l={lg.id}")
-            for ev in data.get("events") or []:
-                if ev["idEvent"] in seen:
+        for endpoint in ("eventspastleague", "eventsnextleague"):
+            if not first:
+                time.sleep(2.5)                    # free tier: 30 requests/minute
+            first = False
+            try:
+                data = _get_json(f"https://www.thesportsdb.com/api/v1/json/{key}/{endpoint}.php?id={lg.id}")
+            except urllib.error.HTTPError as exc:
+                log.warning("TheSportsDB %s %s: HTTP %s", lg.label, endpoint, exc.code)
+                continue
+            for ev in data.get("events") or data.get("results") or []:
+                if ev["idEvent"] in seen or not ev.get("dateEvent"):
                     continue
                 seen.add(ev["idEvent"])
                 stamp = ev.get("strTimestamp") or f"{ev['dateEvent']}T{ev.get('strTime') or '12:00:00'}"
                 starts = _ts(stamp if stamp.endswith(("Z", "+00:00")) else stamp + "+00:00")
+                if abs((starts - now).days) > 10:
+                    continue
                 status = _sportsdb_status(ev)
                 score = lambda v: None if v in (None, "") or status == "scheduled" else str(v)
                 events.append(_event(

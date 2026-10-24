@@ -26,6 +26,7 @@ log = logging.getLogger("newspaper")
 def cmd_migrate(args, settings) -> int:
     with db.connect() as conn:
         applied = db.migrate(conn)
+        db.publish_site_config(conn, settings)
     log.info("Migrations applied: %s", applied or "none (up to date)")
     return 0
 
@@ -33,6 +34,7 @@ def cmd_migrate(args, settings) -> int:
 def cmd_refresh(args, settings) -> int:
     with db.connect() as conn:
         db.migrate(conn)
+        db.publish_site_config(conn, settings)
         with db.job_run(conn, "refresh") as run:
             feeds = ingest(conn, settings)
             run.note(**feeds)
@@ -59,6 +61,7 @@ def cmd_daily(args, settings) -> int:
         return 0
     with db.connect() as conn:
         db.migrate(conn)
+        db.publish_site_config(conn, settings)
         published = conn.execute(
             "select 1 from public.editions where edition_date = %s and status = 'published'",
             (edition_date,),

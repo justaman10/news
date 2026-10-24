@@ -1,92 +1,98 @@
 # The Daily Brief
 
-A newspaper made for one reader. Every morning it pulls the topics you chose from
-RSS feeds, has Claude pick the stories that matter, and writes each one up at the
-depth you asked for. Along the way it builds up an interview-prep notebook.
+A personal daily newspaper that publishes itself. Every morning at 06:00 (Berlin) a new
+edition is waiting. It's built from real reporting by named outlets, organised into
+sections, explained in depth, and tuned to your interests and your interview prep.
+News and scores refresh every 30 minutes.
 
-**Each edition has:**
+**→ First time? Follow [SETUP.md](SETUP.md).**
 
-- **The big picture**: a short opener that ties the day's main threads together.
-- **Sections for your topics**, each at its own depth:
-  - `headlines`: one-line summaries you can scan in 30 seconds
-  - `brief`: a summary, why it matters, and one interview question
-  - `deep`: context, key terms, 2–3 interview questions with answer outlines,
-    and a talking point you can use
-- **Concept of the day** for every section: a framework or idea worth knowing well,
-  with an example and a practice question.
-- **Daily quiz**: multiple-choice questions on today's stories, to check you understood them.
+## What you get
 
-**Across editions:**
-
-- **Archive**: every past edition, kept in `editions/` as JSON.
-- **Interview prep**: every question, concept, term and talking point the paper
-  has ever produced, all on one page. You can search it, filter by topic, shuffle
-  it into flashcards, and mark cards as "I know this" (saved in your browser).
-
-## Set up (about 5 minutes)
-
-1. **Add your API key.** On GitHub, go to *Settings → Secrets and variables → Actions →
-   New repository secret*. Set the name to `ANTHROPIC_API_KEY` and paste a key from
-   [console.anthropic.com](https://console.anthropic.com).
-2. **Turn on GitHub Pages.** Go to *Settings → Pages → Build and deployment → Source*
-   and choose **GitHub Actions**.
-3. **Make sure the code is on `main`.** The schedule only runs on the default branch.
-4. **Run it once.** Go to *Actions → Daily edition → Run workflow*. When it finishes,
-   the paper is at `https://<your-username>.github.io/<repo>/`. Bookmark it.
-
-After that it runs every day at 00:30 UTC (06:00 IST). You can change the time in
-`.github/workflows/daily.yml`.
-
-## Make it yours
-
-Everything is in [`config.yaml`](config.yaml):
-
-| Setting | What it does |
-|---|---|
-| `reader.goal`, `background`, `target_roles` | Tells the editor who you are. This decides which stories get picked and what the interview questions ask. |
-| `topics[].depth` | `headlines`, `brief` or `deep`, set per topic |
-| `topics[].max_stories` | How many stories that section gets |
-| `topics[].keywords` / `exclude` | Push stories you care about up the list; drop stories you never want |
-| `topics[].interview_focus` | The angle the questions take, e.g. "system design" or "case interview" |
-| `topics[].feeds` | Any RSS or Atom URLs |
-| `paper.timezone` | Which day counts as "today" |
-| `ai.effort` | `low`, `medium` or `high`. Higher takes more care and costs more. |
-
-Commit a change to `main` and the site re-renders automatically. That doesn't
-re-write today's edition or cost anything. To regenerate today with the new
-settings, use *Run workflow* with **force** ticked.
-
-Cost: about 6 Claude calls a day (one per section, plus one for the front page),
-typically a few dollars a month at the default settings. Without an API key, the
-paper still builds as a plain headline digest.
-
-## Run locally
-
-```bash
-pip install -r requirements.txt
-export ANTHROPIC_API_KEY=sk-ant-...
-python -m newspaper            # builds today's edition into editions/ and the site into site/
-open site/index.html
-
-python -m newspaper --no-ai    # headline digest, no API calls
-python -m newspaper --force    # rebuild today's edition
-python -m newspaper --render-only
-python -m unittest discover tests
-```
+- **Front page**: date and edition number, a lead story, the 8–12 most important headlines
+  across sections, publisher images, "The big picture" overview, latest updates, scores,
+  and the "For you" picks.
+- **Today's edition**: every section in your order, with Quick / Standard / Full reading
+  depth, a concept of the day per section, and a daily quiz.
+- **Sections**: World 🌍, India 🇮🇳, Germany 🇩🇪 (incl. Koblenz/Vallendar), Politics 🏛️,
+  Sports ⚽ (live scores and fixtures), Business 💼, Technology 🤖, Science 🔬,
+  Entertainment 🎬, and Interview Intelligence 🎯. Each has its own page with today's
+  stories, a live feed straight from the publishers, and earlier coverage.
+- **Deep dives**: what happened (reported), background, why it matters, perspectives,
+  implications, what to watch, a timeline, key terms, interview questions, and every
+  original source. Reporting and analysis are always labelled apart.
+- **My newspaper**: section weights and depth, followed countries, industries, teams,
+  leagues and target roles, plus bookmarks and reading history. All of it syncs across
+  devices when you're signed in.
+- **Archive**: every edition by date, with full-text search.
+- **Interview prep**: every question, concept, term and talking point ever published, as
+  flashcards. Your "known" progress syncs.
+- **Installable PWA**: add it to your iPhone home screen. The last edition you opened stays
+  readable offline.
 
 ## How it works
 
 ```
-feeds ──▶ fetch.py ──▶ editor.py (Claude) ──▶ editions/DATE.json ──▶ render.py ──▶ site/
-          rank, dedupe,   choose stories,        kept in git as          today, archive,
-          skip repeats    write at your depth,   your archive            prep notebook
-                          interview prep, quiz
+             every 30 min                           06:00 Berlin
+ ┌──────────────────────────────┐   ┌────────────────────────────────────────────┐
+ │ GitHub Actions: refresh      │   │ GitHub Actions: daily edition              │
+ │  • 60+ RSS feeds (cond. GET) │   │  • cluster duplicate reports across outlets│
+ │  • football-data, F1, NBA,   │   │  • rank by coverage, freshness, your prefs │
+ │    NFL, IPL, cricket scores  │   │  • Claude edits each section at your depth │
+ │  • developing-story updates  │   │  • front page, quiz, web-researched dives  │
+ └──────────────┬───────────────┘   └──────────────────┬─────────────────────────┘
+                ▼                                      ▼
+        ┌────────────────────────────────────────────────────────┐
+        │ Supabase Postgres: articles, editions, stories, sports, │
+        │ job runs · Auth · profiles, bookmarks, history (RLS)    │
+        └───────────────────────────┬────────────────────────────┘
+                                    ▼  (REST, read-only for content)
+        ┌────────────────────────────────────────────────────────┐
+        │ React PWA on GitHub Pages: justaman10.github.io/news   │
+        └────────────────────────────────────────────────────────┘
 ```
 
-- Stories that ran in the last few editions aren't repeated, and a story covered
-  by two feeds shows up only once.
-- The editor is told to stick to what the sources say and not invent figures.
-  Every story links to its original, so check the original before you quote a
-  number in an interview.
-- If Claude is unavailable, or a request fails or is declined, that section falls
-  back to the plain feed digest. The paper still comes out.
+| Part | Tech | Where |
+|---|---|---|
+| Frontend | React 18, TypeScript, Vite, PWA (Workbox) | `frontend/` → GitHub Pages |
+| Worker | Python 3.12, feedparser, psycopg, Anthropic SDK | `backend/` → GitHub Actions cron |
+| Database & auth | Postgres + Row Level Security, Supabase Auth | Supabase |
+| Sources & defaults | `backend/config/sources.yaml` | |
+
+**Grounded, not invented.** The worker stores only each item's headline, the publisher's
+own short description, the link, and the image from the publisher's feed. It never stores
+full articles. Claude only sees that reporting, grouped by development. Every story it
+writes must point at a real cluster, and any link it cites is checked against URLs we
+actually fetched or found through search. Anything that fails falls back to an unedited
+digest of the source headlines.
+
+**Reliability.** Each source is independent, so a dead feed doesn't stop the paper. Feeds
+are fetched with conditional GET, and every job is recorded in `job_runs` (see the
+site's **System status** page). Publishing is idempotent, and there are backup runs if
+GitHub's scheduler is late. A monthly keep-alive commit stops GitHub from pausing the
+schedule.
+
+## Developing
+
+```bash
+# backend: tests run against a real Postgres
+cd backend && pip install -r requirements.txt
+TEST_DATABASE_URL=postgresql://postgres@localhost/postgres python -m unittest discover tests
+python -m newspaper check-sources          # test every feed and sports API, no DB needed
+DATABASE_URL=... python -m newspaper refresh
+DATABASE_URL=... python -m newspaper daily --force
+
+# frontend
+cd frontend && npm install
+VITE_SUPABASE_URL=... VITE_SUPABASE_ANON_KEY=... npm run dev
+```
+
+To add or swap a source, edit `backend/config/sources.yaml`, push, and the **Check
+sources** workflow reports whether each feed works from GitHub's network.
+
+## Roadmap
+
+- Push notification for the morning edition and big breaking stories
+- AI-written refresh of the lead story when it develops significantly during the day
+- Weekly "week in review" and spaced-repetition scheduling for prep cards
+- Optional custom domain

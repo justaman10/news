@@ -330,10 +330,10 @@ class UnitTest(unittest.TestCase):
             e = sports.football_data(s, now)[0]
         self.assertEqual((e["home"], e["home_score"], e["away_score"], e["status"]), ("Bayern", "3", "1", "finished"))
 
-        tsdb = {"events": [{"idEvent": "9", "strTimestamp": "2026-10-24T00:00:00", "strStatus": "Q3",
+        tsdb = {"events": [{"idEvent": "9", "strTimestamp": "2026-10-24T00:00:00", "dateEvent": "2026-10-24", "strStatus": "Q3",
                             "strHomeTeam": "Lakers", "strAwayTeam": "Celtics", "intHomeScore": "88",
                             "intAwayScore": "80"}]}
-        with mock.patch.object(sports, "_get_json", return_value=tsdb):
+        with mock.patch.object(sports, "_get_json", return_value=tsdb), mock.patch.object(sports.time, "sleep"):
             ev = sports.thesportsdb(s, now)
         self.assertEqual((ev[0]["home"], ev[0]["home_score"], ev[0]["status"]), ("Lakers", "88", "live"))
         self.assertEqual(len(ev), 1)                     # same event on several days counted once

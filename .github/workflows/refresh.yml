@@ -1,0 +1,44 @@
+name: Refresh news & scores
+
+# Every 30 minutes: pull new reporting from every source, update scores and
+# fixtures, and attach newer reports to stories in today's edition. No AI calls.
+on:
+  schedule:
+    - cron: "*/30 * * * *"
+  workflow_dispatch:
+
+concurrency:
+  group: refresh
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: backend
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      FOOTBALL_DATA_TOKEN: ${{ secrets.FOOTBALL_DATA_TOKEN }}
+      CRICKET_API_KEY: ${{ secrets.CRICKET_API_KEY }}
+      THESPORTSDB_KEY: ${{ secrets.THESPORTSDB_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Skip until the database is configured
+        id: gate
+        run: |
+          if [ -z "$DATABASE_URL" ]; then
+            echo "::notice::DATABASE_URL secret not set yet — see SETUP.md. Skipping."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          fi
+      - uses: actions/setup-python@v5
+        if: steps.gate.outputs.skip != 'true'
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: backend/requirements.txt
+      - if: steps.gate.outputs.skip != 'true'
+        run: pip install -r requirements.txt
+      - if: steps.gate.outputs.skip != 'true'
+        run: python -m newspaper refresh

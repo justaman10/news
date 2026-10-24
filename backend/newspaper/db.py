@@ -87,6 +87,24 @@ def job_run(conn: psycopg.Connection, job: str):
         log.info("%s finished: %s", job, json.dumps(run.summary, default=str)[:1000])
 
 
+def publish_site_config(conn: psycopg.Connection, settings) -> None:
+    values = {
+        "categories": [
+            {"slug": c.slug, "name": c.name, "emoji": c.emoji, "focus": c.focus.strip(),
+             "derived": bool(c.derived_from)}
+            for c in settings.categories
+        ],
+        "default_prefs": settings.default_prefs,
+        "paper": {"timezone": settings.timezone, "edition_hour": settings.edition_hour},
+    }
+    for key, value in values.items():
+        conn.execute(
+            "insert into public.site_config (key, value, updated_at) values (%s, %s, now()) "
+            "on conflict (key) do update set value = excluded.value, updated_at = now()",
+            (key, Jsonb(value)),
+        )
+
+
 def owner_prefs(conn: psycopg.Connection, owner_email: str | None) -> dict | None:
     """The newspaper owner's saved preferences, if they have saved any."""
     if owner_email:
