@@ -361,3 +361,98 @@ class UnitTest(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class FakeGemini(http.server.BaseHTTPRequestHandler):
+    """Mimics the Gemini REST API, including the awkward bits we must handle."""
+    calls: list = []
+    rate_limited_once = False
+
+    def log_message(self, *a):
+        pass
+
+    def _send(self, code, payload):
+        data = json.dumps(payload).encode()
+        self.send_response(code)
+        self.send_header("content-type", "application/json")
+        self.send_header("content-length", str(len(data)))
+        self.end_headers()
+        self.wfile.write(data)
+
+    def do_GET(self):
+        self._send(200, {"models": [
+            {"name": "models/gemini-9-flash", "supportedGenerationMethods": ["generateContent"]},
+            {"name": "models/gemini-9-flash-lite", "supportedGenerationMethods": ["generateContent"]},
+            {"name": "models/gemini-9-flash-image", "supportedGenerationMethods": ["generateContent"]},
+            {"name": "models/embedding-1", "supportedGenerationMethods": ["embedContent"]},
+        ]})
+
+    def do_POST(self):
+        body = json.loads(self.rfile.read(int(self.headers["content-length"])))
+        FakeGemini.calls.append((self.path, body))
+        if "gemini-flash-latest" in self.path:
+            return self._send(404, {"error": {"code": 404, "message": "model not found"}})
+        if not FakeGemini.rate_limited_once:
+            FakeGemini.rate_limited_once = True
+            return self._send(429, {"error": {"code": 429, "details": [{"retryDelay": "0s"}]}})
+        if "responseJsonSchema" in body["generationConfig"]:
+            return self._send(400, {"error": {"code": 400, "message": "Unknown name responseJsonSchema"}})
+        prompt = body["contents"][0]["parts"][0]["text"]
+        if "Candidate clusters" in prompt:
+            ids = re.findall(r"^\[(c\d+)\]", prompt, flags=re.M)
+            payload = {"intro": "Gemini intro.", "stories": [
+                {"cluster_id": c, "headline": f"Gemini {c}", "summary": "s", "why_it_matters": "w", "background": "",
+                 "perspectives": [], "implications": "", "key_terms": [], "interview": [{"question": "q?", "answer": "a"}],
+                 "talking_point": "", "importance": 7} for c in ids[:2]],
+                "concept": {"name": "Moat", "explanation": "e", "example": "x", "question": "q", "answer": "a"}}
+        elif "deep dive" in prompt:
+            urls = re.findall(r"\((https://[^)]+)\)", prompt)
+            payload = {"what_happened": "w", "background": "b", "why_it_matters": "y", "perspectives": [],
+                       "implications": "i", "what_to_watch": "t", "timeline": [], "sources_used": urls[:1] + ["https://x.invalid/"]}
+        else:
+            ids = [int(i) for i in re.findall(r"^\[(\d+)\]", prompt, flags=re.M)]
+            payload = {"lead_story_id": ids[0], "top_story_ids": ids[1:4], "lead_note": "Gemini note.", "quiz": []}
+        self._send(200, {"candidates": [{"finishReason": "STOP", "content": {"parts": [
+            {"text": "thinking...", "thought": True}, {"text": "```json\n" + json.dumps(payload) + "\n```"}]}}],
+            "usageMetadata": {"promptTokenCount": 1200, "candidatesTokenCount": 300}})
+
+
+@unittest.skipUnless(ADMIN_URL, "TEST_DATABASE_URL not set")
+class GeminiEditionTest(WorkerTest):
+    """Runs the same pipeline with the free Gemini editor instead of Claude."""
+
+    def test_2_daily_with_ai(self):
+        from newspaper.gemini import GeminiClient
+        srv = http.server.ThreadingHTTPServer(("127.0.0.1", 0), FakeGemini)
+        threading.Thread(target=srv.serve_forever, daemon=True).start()
+        client = GeminiClient("k", "gemini-flash-latest", base_url=f"http://127.0.0.1:{srv.server_port}/v1beta", min_interval=0)
+        with mock.patch.object(editor, "make_client", return_value=client), \
+                mock.patch("newspaper.gemini.time.sleep"):
+            self.assertEqual(main(["daily", "--date", "2026-03-02"]), 0)
+        srv.shutdown()
+        self.assertEqual(client.model, "gemini-9-flash")            # discovered the current Flash model
+        self.assertEqual(client._schema_mode, "openapi")             # fell back after the 400
+        sent = FakeGemini.calls[-1][1]["generationConfig"]["responseSchema"]
+        self.assertNotIn("additionalProperties", json.dumps(sent))
+        ed = self.q("select * from public.editions where edition_date = '2026-03-02'")[0]
+        self.assertTrue(ed["ai"])
+        self.assertEqual(ed["lead_note"], "Gemini note.")
+        self.assertEqual(ed["stats"]["ai_provider"], "gemini")
+        self.assertEqual(ed["stats"]["ai"]["estimated_usd"], 0)
+        dives = self.q("select deep_dive from public.stories where deep_dive is not null")
+        self.assertTrue(dives)
+        for d in dives:
+            self.assertNotIn("https://x.invalid/", [c["url"] for c in d["deep_dive"]["citations"]])
+
+
+class ProviderTest(unittest.TestCase):
+    def test_provider_choice(self):
+        from newspaper.gemini import GeminiClient
+        from newspaper.settings import AISettings
+        with mock.patch.dict(os.environ, {"ANTHROPIC_API_KEY": "", "GEMINI_API_KEY": "g"}):
+            self.assertIsInstance(editor.make_client(AISettings()), GeminiClient)
+        with mock.patch.dict(os.environ, {"ANTHROPIC_API_KEY": "a", "GEMINI_API_KEY": "g"}):
+            self.assertNotIsInstance(editor.make_client(AISettings()), GeminiClient)
+            self.assertIsInstance(editor.make_client(AISettings(provider="gemini")), GeminiClient)
+        with mock.patch.dict(os.environ, {"ANTHROPIC_API_KEY": "", "GEMINI_API_KEY": ""}):
+            self.assertIsNone(editor.make_client(AISettings()))

@@ -15,7 +15,11 @@ Depth = Literal["headlines", "brief", "deep"]
 
 
 class AISettings(BaseModel):
+    # auto: Claude if ANTHROPIC_API_KEY is set, else Gemini (free tier) if
+    # GEMINI_API_KEY is set, else no AI (plain headline digest).
+    provider: Literal["auto", "claude", "gemini", "none"] = "auto"
     model: str = "claude-opus-5-5"
+    gemini_model: str = "gemini-flash-latest"
     effort: Literal["low", "medium", "high"] = "low"
     deep_dives: int = 10
     web_search: bool = True

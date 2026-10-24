@@ -129,7 +129,7 @@ def build_edition(conn: psycopg.Connection, settings: Settings, run: JobRun, *,
             pool = [c for c in clusters if c.home_category(weights) == cat.slug]
         pools[cat.slug] = pool[:POOL_SIZE]
 
-    client = editor.make_client() if use_ai else None
+    client = editor.make_client(settings.ai) if use_ai else None
     budget = editor.Budget(settings.ai.daily_budget_usd)
     sports_context = recent_results_text(conn)
 
@@ -260,6 +260,7 @@ def build_edition(conn: psycopg.Connection, settings: Settings, run: JobRun, *,
                     run.warn(f"Deep dive skipped for story {story['id']}: {problem}")
 
     stats = {
+        "ai_provider": "none" if client is None else ("gemini" if isinstance(client, editor.GeminiClient) else "claude"),
         "stories": len(all_stories),
         "sections": {slug: len(sec["stories"]) for slug, sec in sections.items()},
         "deep_dives": deep_dives,

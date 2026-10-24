@@ -14,7 +14,12 @@ timezone: Europe/Berlin
 edition_hour: 6            # local hour the daily edition is published
 
 ai:
-  model: claude-opus-5-5
+  # Which AI writes the paper. "auto" uses Claude if ANTHROPIC_API_KEY is set,
+  # otherwise Google Gemini's free tier if GEMINI_API_KEY is set, otherwise no AI
+  # (the paper still publishes as a plain headline digest).
+  provider: auto           # auto | claude | gemini | none
+  gemini_model: gemini-flash-latest   # free; if Google retires this name, a current Flash model is picked
+  model: claude-opus-5-5   # paid alternative
   effort: low              # low | medium | high (editing + deep dives)
   deep_dives: 10           # front-page stories that get a full web-researched deep dive
   web_search: true         # let deep dives look up extra reporting (cited, linked)

@@ -16,6 +16,8 @@ from dataclasses import dataclass, field
 import anthropic
 
 from .cluster import Cluster
+from .gemini import GeminiClient, GeminiError
+from .gemini import from_env as gemini_from_env
 from .settings import AISettings
 
 log = logging.getLogger(__name__)
@@ -146,6 +148,13 @@ class Budget:
             self.tokens_out += tout
             self.spent_usd += cost
 
+    def add_free(self, usage: dict) -> None:
+        """Gemini free tier: count usage, no cost."""
+        with self._lock:
+            self.calls += 1
+            self.tokens_in += usage.get("promptTokenCount", 0) or 0
+            self.tokens_out += (usage.get("candidatesTokenCount", 0) or 0) + (usage.get("thoughtsTokenCount", 0) or 0)
+
     @property
     def exhausted(self) -> bool:
         return self.spent_usd >= self.limit_usd
@@ -155,11 +164,19 @@ class Budget:
                 "tokens_out": self.tokens_out, "estimated_usd": round(self.spent_usd, 3)}
 
 
-def make_client() -> anthropic.Anthropic | None:
-    if not (os.environ.get("ANTHROPIC_API_KEY") or os.environ.get("ANTHROPIC_AUTH_TOKEN")):
-        log.warning("ANTHROPIC_API_KEY not set — the edition will be a plain digest without AI.")
-        return None
-    return anthropic.Anthropic(max_retries=3, timeout=600)
+def make_client(ai: AISettings | None = None) -> anthropic.Anthropic | GeminiClient | None:
+    ai = ai or AISettings()
+    has_claude = bool(os.environ.get("ANTHROPIC_API_KEY") or os.environ.get("ANTHROPIC_AUTH_TOKEN"))
+    if ai.provider in ("auto", "claude") and has_claude:
+        return anthropic.Anthropic(max_retries=3, timeout=600)
+    if ai.provider in ("auto", "gemini"):
+        client = gemini_from_env(ai.gemini_model)
+        if client:
+            log.info("Using Google Gemini (%s) as the AI editor.", ai.gemini_model)
+            return client
+    if ai.provider != "none":
+        log.warning("No AI key set (ANTHROPIC_API_KEY or GEMINI_API_KEY) — plain digest without AI.")
+    return None
 
 
 def reader_profile(prefs: dict) -> str:
@@ -206,6 +223,13 @@ def _create(client, ai: AISettings, budget: Budget, **request):
 
 
 def _ask_json(client, ai: AISettings, budget: Budget, prompt: str, schema: dict) -> dict:
+    if isinstance(client, GeminiClient):
+        try:
+            data, usage = client.ask_json(SYSTEM_PROMPT, prompt, schema)
+        except GeminiError as exc:
+            raise EditorError(str(exc)) from exc
+        budget.add_free(usage)
+        return data
     response = _create(
         client, ai, budget,
         messages=[{"role": "user", "content": prompt}],
@@ -324,6 +348,15 @@ def deep_dive(client, ai: AISettings, budget: Budget, prefs: dict, story: dict) 
         "- sources_used: the URLs you relied on (from the list above or your searches).\n"
         "Never invent facts or figures; if something is uncertain, say so."
     )
+    if isinstance(client, GeminiClient):
+        # Free tier: no web research; the dive is grounded in the reporting we fetched.
+        prompt = prompt.replace(research, "").replace(
+            "Then call `publish_deep_dive` once with:", "Return JSON with:")
+        result = _ask_json(client, ai, budget, prompt, DEEP_DIVE_TOOL["input_schema"])
+        known = {s["url"]: s["title"] for s in story["sources"]}
+        result["citations"] = [{"url": u, "title": known[u]} for u in result.pop("sources_used", []) if u in known]
+        return result
+
     tools: list[dict] = [DEEP_DIVE_TOOL]
     if ai.web_search:
         tools.insert(0, {"type": "web_search_20260209", "name": "web_search",

@@ -1,6 +1,6 @@
 # Setting up your newspaper (about 20 minutes, once)
 
-You'll create two accounts (Supabase for the database, Anthropic for the AI editor),
+You'll create two free accounts (Supabase for the database, Google AI Studio for the AI editor),
 paste a few values into GitHub, and click "Run". After that everything runs on its own,
 forever, whether or not you open the site.
 
@@ -26,17 +26,18 @@ Your site will live at **https://justaman10.github.io/news/**
 
 You don't need to create any tables. The backend sets up the database automatically on its first run.
 
-## 2. AI editor: Anthropic API key
+## 2. AI editor: Google Gemini (free, no card)
 
-1. Sign up at **https://console.anthropic.com**, add a payment method or credits.
-2. **API keys → Create key** and copy it (`sk-ant-…`).
-3. Recommended: set a monthly spend limit in the console (e.g. $60).
+1. Go to **https://aistudio.google.com** and sign in with any Google account.
+2. Click **Get API key** → **Create API key** (let it create a project if asked) → copy the key (`AIza…`).
 
-What it costs: the editor uses Claude Opus 5.5 at low effort. A typical day is about 15
-editing calls plus around 10 web-researched deep dives, so roughly **$1–2.50 a day**. A hard cap of
-`daily_budget_usd: 4.0` in `backend/config/sources.yaml` stops optional work (deep dives) once
-it's reached. Every run's estimated cost is shown on the site's **System status** page. To spend
-less, lower `deep_dives`, or set `model: claude-sonnet-5-5` (about half the price).
+That's it. The free tier allows roughly 10 requests a minute and a few hundred a day.
+The paper needs about 20 a day and paces itself. Note: on the free tier Google may use
+what's sent (public headlines and your stated interests) to improve its products.
+
+*Optional, paid:* to use Claude instead (it also researches the deep dives on the web),
+add an `ANTHROPIC_API_KEY` from console.anthropic.com. When both keys exist, Claude is used.
+It costs about $1–2.50 a day, capped by `daily_budget_usd` in `backend/config/sources.yaml`.
 
 ## 3. Optional: richer scores (both free)
 
@@ -56,7 +57,7 @@ Open **https://github.com/justaman10/news/settings/secrets/actions**.
 | Name | Value |
 |---|---|
 | `DATABASE_URL` | the Session pooler URI from step 1.3 |
-| `ANTHROPIC_API_KEY` | `sk-ant-…` from step 2 |
+| `GEMINI_API_KEY` | `AIza…` from step 2 |
 | `FOOTBALL_DATA_TOKEN` | *(optional)* football-data.org token |
 | `CRICKET_API_KEY` | *(optional)* cricketdata.org key |
 

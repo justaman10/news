@@ -38,8 +38,8 @@ News and scores refresh every 30 minutes.
  │ GitHub Actions: refresh      │   │ GitHub Actions: daily edition              │
  │  • 60+ RSS feeds (cond. GET) │   │  • cluster duplicate reports across outlets│
  │  • football-data, F1, NBA,   │   │  • rank by coverage, freshness, your prefs │
- │    NFL, IPL, cricket scores  │   │  • Claude edits each section at your depth │
- │  • developing-story updates  │   │  • front page, quiz, web-researched dives  │
+ │    NFL, IPL, cricket scores  │   │  • AI edits each section at your depth     │
+ │  • developing-story updates  │   │  • front page, quiz, deep dives            │
  └──────────────┬───────────────┘   └──────────────────┬─────────────────────────┘
                 ▼                                      ▼
         ┌────────────────────────────────────────────────────────┐
@@ -55,13 +55,13 @@ News and scores refresh every 30 minutes.
 | Part | Tech | Where |
 |---|---|---|
 | Frontend | React 18, TypeScript, Vite, PWA (Workbox) | `frontend/` → GitHub Pages |
-| Worker | Python 3.12, feedparser, psycopg, Anthropic SDK | `backend/` → GitHub Actions cron |
+| Worker | Python 3.12, feedparser, psycopg; Gemini (free) or Claude | `backend/` → GitHub Actions cron |
 | Database & auth | Postgres + Row Level Security, Supabase Auth | Supabase |
 | Sources & defaults | `backend/config/sources.yaml` | |
 
 **Grounded, not invented.** The worker stores only each item's headline, the publisher's
 own short description, the link, and the image from the publisher's feed. It never stores
-full articles. Claude only sees that reporting, grouped by development. Every story it
+full articles. The AI editor (Gemini's free tier, or Claude) only sees that reporting, grouped by development. Every story it
 writes must point at a real cluster, and any link it cites is checked against URLs we
 actually fetched or found through search. Anything that fails falls back to an unedited
 digest of the source headlines.
