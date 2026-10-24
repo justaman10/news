@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}{% endblock %}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&family=Inter:wght@500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📰</text></svg>">
+</head>
+<body>
+  <nav class="topnav">
+    <a href="index.html" {% if page == "today" %}aria-current="page"{% endif %}>Today</a>
+    <a href="archive.html" {% if page == "archive" %}aria-current="page"{% endif %}>Archive</a>
+    <a href="prep.html" {% if page == "prep" %}aria-current="page"{% endif %}>Interview prep</a>
+    <button class="theme-toggle" type="button" aria-label="Toggle dark mode">◐</button>
+  </nav>
+  <main class="page">
+    {% block content %}{% endblock %}
+  </main>
+  <script src="app.js"></script>
+</body>
+</html>

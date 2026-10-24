@@ -1,0 +1,137 @@
+{% extends "base.html.j2" %}
+{% block title %}{{ edition.title }} · {{ edition.date }}{% endblock %}
+{% block content %}
+<header class="masthead">
+  <div class="dateline">
+    <span>No. {{ number }}</span>
+    <span>{{ edition.date | long_date }}</span>
+    <span>{{ minutes }} min read</span>
+  </div>
+  <h1 class="paper-title">{{ edition.title }}</h1>
+  {% if edition.tagline %}<p class="tagline">{{ edition.tagline }}</p>{% endif %}
+  {% if edition.reader_name %}<p class="for">Prepared for {{ edition.reader_name }}</p>{% endif %}
+</header>
+
+{% if edition.lead_note %}
+<section class="lead-note">
+  <h2 class="kicker">The big picture</h2>
+  <p>{{ edition.lead_note }}</p>
+</section>
+{% endif %}
+
+<nav class="contents" aria-label="Sections">
+  {% for sec in edition.sections if sec.stories %}
+  <a href="#{{ sec.slug }}">{{ sec.name }} <span>{{ sec.stories | length }}</span></a>
+  {% endfor %}
+  {% if edition.quiz %}<a href="#quiz">Daily quiz <span>{{ edition.quiz | length }}</span></a>{% endif %}
+</nav>
+
+{% for sec in edition.sections if sec.stories %}
+<section class="section depth-{{ sec.depth }}" id="{{ sec.slug }}">
+  <header class="section-head">
+    <h2>{{ sec.name }}</h2>
+    <span class="chip">{{ sec.depth }}</span>
+  </header>
+
+  {% if sec.depth == "headlines" %}
+  <ul class="headline-list">
+    {% for s in sec.stories %}
+    <li>
+      <a href="{{ s.link }}" target="_blank" rel="noopener">{{ s.headline }}</a>
+      {% if s.summary %}<p>{{ s.summary }}</p>{% endif %}
+      <span class="meta">{{ s.source }}{% if s.published %} · {{ s.published | short_time }}{% endif %}</span>
+    </li>
+    {% endfor %}
+  </ul>
+  {% else %}
+  <div class="stories">
+    {% for s in sec.stories %}
+    <article class="story{% if loop.first and sec.depth == 'deep' %} lead{% endif %}">
+      <h3><a href="{{ s.link }}" target="_blank" rel="noopener">{{ s.headline }}</a></h3>
+      <p class="meta">{{ s.source }}{% if s.published %} · {{ s.published | short_time }}{% endif %}</p>
+      {% if s.summary %}<p class="summary">{{ s.summary }}</p>{% endif %}
+      {% if s.why_it_matters %}
+      <p class="why"><strong>Why it matters.</strong> {{ s.why_it_matters }}</p>
+      {% endif %}
+
+      {% if s.background or s.key_terms %}
+      <details class="context">
+        <summary>Background &amp; key terms</summary>
+        {% if s.background %}<p>{{ s.background }}</p>{% endif %}
+        {% if s.key_terms %}
+        <dl class="terms">
+          {% for t in s.key_terms %}<dt>{{ t.term }}</dt><dd>{{ t.definition }}</dd>{% endfor %}
+        </dl>
+        {% endif %}
+      </details>
+      {% endif %}
+
+      {% if s.interview_questions or s.talking_point %}
+      <div class="interview">
+        <h4 class="kicker">Interview corner</h4>
+        {% for q in s.interview_questions %}
+        <details class="qa">
+          <summary>{{ q.question }}</summary>
+          <p>{{ q.answer_hint }}</p>
+        </details>
+        {% endfor %}
+        {% if s.talking_point %}
+        <p class="talking"><span>Your talking point</span>{{ s.talking_point }}</p>
+        {% endif %}
+      </div>
+      {% endif %}
+    </article>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  {% if sec.concept %}
+  <aside class="concept">
+    <h4 class="kicker">Concept of the day</h4>
+    <h3>{{ sec.concept.name }}</h3>
+    <p>{{ sec.concept.explanation }}</p>
+    {% if sec.concept.example %}<p class="example"><em>Example:</em> {{ sec.concept.example }}</p>{% endif %}
+    {% if sec.concept.interview_question %}
+    <details class="qa">
+      <summary>{{ sec.concept.interview_question }}</summary>
+      <p>{{ sec.concept.answer_hint }}</p>
+    </details>
+    {% endif %}
+  </aside>
+  {% endif %}
+</section>
+{% endfor %}
+
+{% if edition.quiz %}
+<section class="section quiz" id="quiz">
+  <header class="section-head">
+    <h2>Daily quiz</h2>
+    <span class="chip quiz-score" aria-live="polite">0 / {{ edition.quiz | length }}</span>
+  </header>
+  <ol class="quiz-list">
+    {% for q in edition.quiz %}
+    <li class="quiz-item" data-answer="{{ q.answer_index }}">
+      <p class="quiz-q">{{ q.question }}</p>
+      <div class="options">
+        {% for opt in q.options %}
+        <button type="button" class="option" data-index="{{ loop.index0 }}">{{ opt }}</button>
+        {% endfor %}
+      </div>
+      <p class="explanation" hidden>{{ q.explanation }}</p>
+    </li>
+    {% endfor %}
+  </ol>
+</section>
+{% endif %}
+
+<footer class="footer">
+  <div class="pager">
+    {% if older %}<a href="{{ older }}.html">← {{ older | long_date }}</a>{% else %}<span></span>{% endif %}
+    {% if newer %}<a href="{{ newer }}.html">{{ newer | long_date }} →</a>{% endif %}
+  </div>
+  <p>Generated {{ edition.generated_at | short_time }}.
+    {% if edition.ai %}Written and selected by an AI editor from the linked sources — check the originals before quoting facts in an interview.
+    {% else %}Plain digest (AI editor was off for this edition).{% endif %}
+  </p>
+</footer>
+{% endblock %}

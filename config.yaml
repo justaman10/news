@@ -1,0 +1,117 @@
+# ─────────────────────────────────────────────────────────────────────────────
+#  Your personal newspaper. Edit this file to change what you read each morning.
+#  Every change is picked up on the next run — no code changes needed.
+# ─────────────────────────────────────────────────────────────────────────────
+
+# Who the paper is for. The AI editor uses this to pick stories and to shape the
+# "Interview corner" — the more specific you are, the better the prep gets.
+reader:
+  name: Amaan
+  goal: >-
+    Stay genuinely up to date every day, and build a bank of talking points,
+    concepts and practice questions I can use in job interviews.
+  background: >-
+    Early-career professional in tech. Comfortable with software and data,
+    curious about business strategy and how the economy affects companies.
+  target_roles:
+    - Software Engineer
+    - Product Manager
+    - Business / Strategy Analyst
+  region: Global          # e.g. "India", "US", "Europe" — biases what counts as relevant
+
+paper:
+  title: The Daily Brief
+  tagline: Everything you need to know today — and how to talk about it tomorrow.
+  timezone: UTC           # the "today" of each edition, e.g. Asia/Kolkata, America/New_York
+  lookback_hours: 36      # only consider stories published in this window
+  avoid_repeats_days: 3   # don't re-run stories that appeared in the last N editions
+
+ai:
+  enabled: true           # needs ANTHROPIC_API_KEY; without it you get a plain headline digest
+  model: claude-opus-5-5
+  effort: medium          # low | medium | high — higher = more thoughtful, slower, pricier
+  quiz_questions: 5       # end-of-paper quiz drawn from today's stories (0 to disable)
+
+# ─────────────────────────────────────────────────────────────────────────────
+#  Topics — one section of the paper each, in this order.
+#
+#  depth:
+#    headlines → one-line summaries, scan in 30 seconds
+#    brief     → short summary, why it matters, one interview question
+#    deep      → full briefing: context, key terms, 2-3 interview questions
+#                with answer outlines, and a talking point you can use
+#
+#  keywords:         stories mentioning these get priority
+#  exclude:          stories mentioning these are dropped
+#  interview_focus:  what angle the interview questions should take
+#  feeds:            any RSS/Atom URLs
+# ─────────────────────────────────────────────────────────────────────────────
+topics:
+  - name: AI & Machine Learning
+    depth: deep
+    max_stories: 4
+    keywords: [LLM, model, OpenAI, Anthropic, Google, regulation, chips, Nvidia, agents]
+    exclude: [deal, discount, "% off"]
+    interview_focus: >-
+      How the technology works at a conceptual level, product and business
+      implications, ethics and regulation, and what it means for software teams.
+    feeds:
+      - https://www.technologyreview.com/topic/artificial-intelligence/feed
+      - https://techcrunch.com/category/artificial-intelligence/feed/
+      - https://www.theverge.com/rss/ai-artificial-intelligence/index.xml
+
+  - name: Tech & Software
+    depth: deep
+    max_stories: 4
+    keywords: [launch, outage, security, open source, cloud, acquisition, layoffs, antitrust]
+    exclude: [deal, discount, "% off", review]
+    interview_focus: >-
+      System design trade-offs, engineering practices, security lessons, and
+      product strategy of big tech companies.
+    feeds:
+      - https://hnrss.org/frontpage?points=200
+      - https://feeds.arstechnica.com/arstechnica/technology-lab
+      - https://techcrunch.com/feed/
+
+  - name: Business & Markets
+    depth: brief
+    max_stories: 4
+    keywords: [earnings, IPO, interest rates, inflation, merger, strategy, revenue]
+    interview_focus: >-
+      Business strategy, competitive dynamics, unit economics and what a case
+      interviewer might ask about the company or industry.
+    feeds:
+      - https://feeds.bbci.co.uk/news/business/rss.xml
+      - https://www.cnbc.com/id/10001147/device/rss/rss.html
+
+  - name: World
+    depth: brief
+    max_stories: 4
+    interview_focus: >-
+      Geopolitics and policy that affect businesses, supply chains and markets.
+    feeds:
+      - https://feeds.bbci.co.uk/news/world/rss.xml
+      - https://www.aljazeera.com/xml/rss/all.xml
+
+  - name: Science & Climate
+    depth: headlines
+    max_stories: 3
+    feeds:
+      - https://www.sciencedaily.com/rss/top/science.xml
+      - https://www.theguardian.com/environment/climate-crisis/rss
+
+  # Uncomment to add a section (or write your own):
+  #
+  # - name: India
+  #   depth: brief
+  #   max_stories: 4
+  #   interview_focus: Indian economy, policy, and the startup ecosystem.
+  #   feeds:
+  #     - https://www.thehindu.com/news/national/feeder/default.rss
+  #     - https://economictimes.indiatimes.com/rssfeedstopstories.cms
+  #
+  # - name: Startups & Venture
+  #   depth: brief
+  #   max_stories: 3
+  #   feeds:
+  #     - https://techcrunch.com/category/startups/feed/

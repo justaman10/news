@@ -1,0 +1,20 @@
+{% extends "base.html.j2" %}
+{% block title %}Archive · {{ title }}{% endblock %}
+{% block content %}
+<header class="masthead compact">
+  <h1 class="paper-title">Archive</h1>
+  <p class="tagline">{{ editions | length }} edition{{ "s" if editions | length != 1 }} of {{ title }}</p>
+</header>
+<ul class="archive-list">
+  {% for ed in editions %}
+  <li>
+    <a href="{{ ed.date }}.html">{{ ed.date | long_date }}</a>
+    <ul>
+      {% for sec in ed.sections if sec.stories %}
+      <li><span>{{ sec.name }}</span> {{ sec.stories[0].headline }}</li>
+      {% endfor %}
+    </ul>
+  </li>
+  {% endfor %}
+</ul>
+{% endblock %}
