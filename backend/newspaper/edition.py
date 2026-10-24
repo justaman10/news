@@ -172,6 +172,9 @@ def build_edition(conn: psycopg.Connection, settings: Settings, run: JobRun, *,
             s["rank"] = i
         sections[cat.slug]["stories"] = kept
 
+    if not any(sec["stories"] for sec in sections.values()):
+        raise RuntimeError("No stories available — are the feeds reachable? Edition not published.")
+
     # ── write draft ──
     with conn.transaction():
         if existing:
@@ -210,9 +213,6 @@ def build_edition(conn: psycopg.Connection, settings: Settings, run: JobRun, *,
                      s["primary_url"], Jsonb(s["sources"]), s["published_at"]),
                 ).fetchone()["id"]
                 all_stories.append(s)
-
-    if not all_stories:
-        raise RuntimeError("No stories available — are the feeds reachable? Edition not published.")
 
     # ── front page ──
     news_stories = [s for s in all_stories if s["category"] != "interview"]

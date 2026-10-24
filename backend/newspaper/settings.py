@@ -39,15 +39,15 @@ class FootballData(BaseModel):
     competitions: list[str] = Field(default_factory=lambda: ["PL", "BL1", "CL"])
 
 
-class EspnLeague(BaseModel):
-    sport: str
-    league: str
+class SportsDbLeague(BaseModel):
+    id: int
     label: str
+    sport: str
 
 
-class Espn(BaseModel):
+class SportsDb(BaseModel):
     enabled: bool = True
-    leagues: list[EspnLeague] = Field(default_factory=list)
+    leagues: list[SportsDbLeague] = Field(default_factory=list)
 
 
 class Toggle(BaseModel):
@@ -57,7 +57,7 @@ class Toggle(BaseModel):
 class SportsSettings(BaseModel):
     football_data: FootballData = Field(default_factory=FootballData)
     f1: Toggle = Field(default_factory=Toggle)
-    espn: Espn = Field(default_factory=Espn)
+    thesportsdb: SportsDb = Field(default_factory=SportsDb)
     cricket: Toggle = Field(default_factory=Toggle)
 
 

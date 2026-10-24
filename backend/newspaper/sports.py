@@ -103,41 +103,44 @@ def formula1(settings: Settings, now: datetime) -> list[dict]:
     return events
 
 
-# ─── ESPN public scoreboards ─────────────────────────────────────────────────
-ESPN_STATE = {"pre": "scheduled", "in": "live", "post": "finished"}
+# ─── TheSportsDB (free public API) ───────────────────────────────────────────
+def _sportsdb_status(ev: dict) -> str:
+    raw = (ev.get("strStatus") or "").lower()
+    if "postpon" in raw:
+        return "postponed"
+    if "cancel" in raw:
+        return "cancelled"
+    if "finish" in raw or raw in ("ft", "aet", "aot", "ap", "pen"):
+        return "finished"
+    if ev.get("intHomeScore") in (None, "") or raw in ("", "ns", "not started", "tbd"):
+        return "scheduled"
+    return "live"
 
 
-def espn(settings: Settings, now: datetime) -> list[dict]:
-    cfg = settings.sports.espn
+def thesportsdb(settings: Settings, now: datetime) -> list[dict]:
+    cfg = settings.sports.thesportsdb
     if not cfg.enabled:
         return []
-    span = f"{(now - timedelta(days=2)):%Y%m%d}-{(now + timedelta(days=5)):%Y%m%d}"
-    events = []
+    key = os.environ.get("THESPORTSDB_KEY") or "123"
+    events, seen = [], set()
     for lg in cfg.leagues:
-        try:
-            data = _get_json(
-                f"https://site.api.espn.com/apis/site/v2/sports/{lg.sport}/{lg.league}/scoreboard?dates={span}"
-            )
-        except Exception as exc:
-            log.warning("ESPN %s failed: %s", lg.label, exc)
-            continue
-        for ev in data.get("events", []):
-            comp = (ev.get("competitions") or [{}])[0]
-            teams = {c.get("homeAway"): c for c in comp.get("competitors", [])}
-            home, away = teams.get("home", {}), teams.get("away", {})
-            st = (ev.get("status") or {}).get("type") or {}
-            status = ESPN_STATE.get(st.get("state"), "scheduled")
-            if st.get("name") == "STATUS_POSTPONED":
-                status = "postponed"
-            link = next((l["href"] for l in ev.get("links", []) if l.get("href")), None)
-            name = lambda t: (t.get("team") or {}).get("shortDisplayName") or (t.get("team") or {}).get("displayName") or "TBD"
-            events.append(_event(
-                f"espn:{lg.league}:{ev['id']}", lg.sport.title() if lg.sport != "soccer" else "Football",
-                lg.label, _ts(ev["date"]), status, name(home), name(away),
-                home.get("score") if status != "scheduled" else None,
-                away.get("score") if status != "scheduled" else None,
-                st.get("shortDetail", ""), link,
-            ))
+        for offset in range(-1, 3):           # stays well under the free 30 requests/min
+            day = (now + timedelta(days=offset)).date().isoformat()
+            data = _get_json(f"https://www.thesportsdb.com/api/v1/json/{key}/eventsday.php?d={day}&l={lg.id}")
+            for ev in data.get("events") or []:
+                if ev["idEvent"] in seen:
+                    continue
+                seen.add(ev["idEvent"])
+                stamp = ev.get("strTimestamp") or f"{ev['dateEvent']}T{ev.get('strTime') or '12:00:00'}"
+                starts = _ts(stamp if stamp.endswith(("Z", "+00:00")) else stamp + "+00:00")
+                status = _sportsdb_status(ev)
+                score = lambda v: None if v in (None, "") or status == "scheduled" else str(v)
+                events.append(_event(
+                    f"tsdb:{ev['idEvent']}", lg.sport, lg.label, starts, status,
+                    ev.get("strHomeTeam") or ev.get("strEvent") or "TBD", ev.get("strAwayTeam") or "",
+                    score(ev.get("intHomeScore")), score(ev.get("intAwayScore")),
+                    ev.get("strResult") or (ev.get("strStatus") or "")[:80],
+                ))
     return events
 
 
@@ -175,7 +178,7 @@ def cricket(settings: Settings, now: datetime) -> list[dict]:
     return events
 
 
-PROVIDERS = {"football_data": football_data, "f1": formula1, "espn": espn, "cricket": cricket}
+PROVIDERS = {"football_data": football_data, "f1": formula1, "thesportsdb": thesportsdb, "cricket": cricket}
 
 
 def update_sports(conn: psycopg.Connection, settings: Settings, now: datetime | None = None) -> dict:

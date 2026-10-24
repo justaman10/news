@@ -44,7 +44,8 @@ categories:
     focus: Indian politics, economy, society, foreign relations and national news.
     feeds:
       - https://www.thehindu.com/news/national/feeder/default.rss
-      - https://indianexpress.com/section/india/feed/
+      - https://timesofindia.indiatimes.com/rssfeeds/-2128936835.cms
+      - https://theprint.in/category/india/feed/
       - https://www.hindustantimes.com/feeds/rss/india-news/rssfeed.xml
       - https://feeds.feedburner.com/ndtvnews-india-news
       - https://www.livemint.com/rss/economy
@@ -60,10 +61,12 @@ categories:
     feeds:
       - https://rss.dw.com/rdf/rss-en-ger
       - https://www.thelocal.de/feeds/rss.php
-      - https://www.spiegel.de/international/index.rss
+      - https://newsfeed.zeit.de/index
+      - https://www.spiegel.de/schlagzeilen/index.rss
       - https://www.tagesschau.de/xml/rss2/
-      - https://www.swr.de/swraktuell/rheinland-pfalz/koblenz/index~rss2.xml
-      - https://www.swr.de/swraktuell/rheinland-pfalz/index~rss2.xml
+      # Local news: Google News' public RSS search, which links to the original publishers.
+      - https://news.google.com/rss/search?q=Koblenz+OR+Vallendar&hl=de&gl=DE&ceid=DE:de
+      - https://news.google.com/rss/search?q=Rheinland-Pfalz+Landesregierung&hl=de&gl=DE&ceid=DE:de
 
   - slug: politics
     name: Politics
@@ -88,8 +91,9 @@ categories:
       - https://feeds.bbci.co.uk/sport/formula1/rss.xml
       - https://feeds.bbci.co.uk/sport/tennis/rss.xml
       - https://www.espncricinfo.com/rss/content/story/feeds/0.xml
-      - https://www.espn.com/espn/rss/nba/news
-      - https://www.espn.com/espn/rss/nfl/news
+      - https://www.cbssports.com/rss/headlines/nba/
+      - https://www.cbssports.com/rss/headlines/nfl/
+      - https://www.skysports.com/rss/12040
       - https://www.theguardian.com/football/rss
       - https://www.thehindu.com/sport/other-sports/feeder/default.rss
 
@@ -152,7 +156,8 @@ categories:
       industry shifts, M&A, regulation, supply chains, market entry, pricing
       power, geopolitics affecting companies. Frame each with a consulting lens.
     feeds:
-      - https://feeds.hbr.org/harvardbusiness
+      - https://hbr.org/feed
+      - https://knowledge.wharton.upenn.edu/feed/
       - https://www.economist.com/the-world-this-week/rss.xml
 
 # Defaults for "My Newspaper" until you save your own. weight: 0 (hide) … 3 (most)
@@ -184,11 +189,12 @@ sports:
     competitions: [PL, BL1, CL, PD, SA, FL1, EC, WC]   # free-tier competitions
   f1:
     enabled: true             # api.jolpi.ca (open Ergast-compatible API)
-  espn:
-    enabled: true             # ESPN's public scoreboard JSON (unofficial; disable if you prefer)
+  thesportsdb:
+    enabled: true             # thesportsdb.com free API (public key "123", or THESPORTSDB_KEY)
     leagues:
-      - {sport: basketball, league: nba, label: NBA}
-      - {sport: football, league: nfl, label: NFL}
-      - {sport: soccer, league: ind.1, label: Indian Super League}
+      - {id: 4387, label: NBA, sport: Basketball}
+      - {id: 4391, label: NFL, sport: American football}
+      - {id: 4460, label: Indian Premier League, sport: Cricket}
+      - {id: 4791, label: Indian Super League, sport: Football}
   cricket:
     enabled: true             # cricketdata.org, needs CRICKET_API_KEY (free 100 calls/day)

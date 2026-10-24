@@ -92,6 +92,13 @@ def parse_feed(content: bytes, feed_url: str, now: datetime) -> list[FeedItem]:
         link = (entry.get("link") or "").strip()
         if not title or not link.startswith("http"):
             continue
+        item_source = source
+        # Aggregator feeds (e.g. Google News) name the original publisher per item.
+        publisher = clean_text((entry.get("source") or {}).get("title", ""))
+        if publisher:
+            item_source = publisher
+            if title.endswith(f" - {publisher}"):
+                title = title[: -len(publisher) - 3].strip()
         stamp = entry.get("published_parsed") or entry.get("updated_parsed")
         published = datetime.fromtimestamp(calendar.timegm(stamp), tz=timezone.utc) if stamp else None
         if published and (published < now - MAX_AGE or published > now + timedelta(hours=2)):
@@ -101,7 +108,9 @@ def parse_feed(content: bytes, feed_url: str, now: datetime) -> list[FeedItem]:
             snippet = snippet[len(title):].strip(" -–:")
         if len(snippet) > SNIPPET_CHARS:
             snippet = snippet[:SNIPPET_CHARS].rsplit(" ", 1)[0] + "…"
-        items.append(FeedItem(link, title, snippet, source, find_image(entry), published))
+        if publisher and snippet.startswith(title):
+            snippet = ""                       # Google News descriptions just repeat the title
+        items.append(FeedItem(link, title, snippet, item_source, find_image(entry), published))
     return items
 
 
