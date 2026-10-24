@@ -1,0 +1,194 @@
+# ─────────────────────────────────────────────────────────────────────────────
+#  News sources and editorial defaults.
+#
+#  Your *personal* preferences (weights, depth, teams, countries…) are edited on
+#  the website under "My Newspaper" and stored in the database. This file holds
+#  the sources and the defaults used before you've set anything.
+#
+#  Only publisher-provided RSS/Atom feeds and documented APIs are used. We store
+#  the headline, the publisher's own short description, the link and the
+#  publisher's feed image — never full article text.
+# ─────────────────────────────────────────────────────────────────────────────
+
+timezone: Europe/Berlin
+edition_hour: 6            # local hour the daily edition is published
+
+ai:
+  model: claude-opus-5-5
+  effort: low              # low | medium | high (editing + deep dives)
+  deep_dives: 10           # front-page stories that get a full web-researched deep dive
+  web_search: true         # let deep dives look up extra reporting (cited, linked)
+  web_search_max_uses: 3
+  daily_budget_usd: 4.0    # optional work (deep dives) stops once this is spent
+  quiz_questions: 5
+
+# Anything older than this is ignored when building an edition.
+lookback_hours: 30
+
+categories:
+  - slug: world
+    name: World
+    emoji: "🌍"
+    focus: Major international developments, conflicts, diplomacy, disasters, global institutions.
+    feeds:
+      - https://feeds.bbci.co.uk/news/world/rss.xml
+      - https://www.theguardian.com/world/rss
+      - https://www.aljazeera.com/xml/rss/all.xml
+      - https://rss.dw.com/rdf/rss-en-world
+      - https://feeds.npr.org/1004/rss.xml
+      - https://www.france24.com/en/rss
+
+  - slug: india
+    name: India
+    emoji: "🇮🇳"
+    focus: Indian politics, economy, society, foreign relations and national news.
+    feeds:
+      - https://www.thehindu.com/news/national/feeder/default.rss
+      - https://indianexpress.com/section/india/feed/
+      - https://www.hindustantimes.com/feeds/rss/india-news/rssfeed.xml
+      - https://feeds.feedburner.com/ndtvnews-india-news
+      - https://www.livemint.com/rss/economy
+      - https://www.thehindu.com/business/Economy/feeder/default.rss
+
+  - slug: germany
+    name: Germany
+    emoji: "🇩🇪"
+    focus: >-
+      German politics, economy, immigration and society; regional news from
+      Rhineland-Palatinate, especially Koblenz and Vallendar.
+    local_keywords: [Koblenz, Vallendar, Rheinland-Pfalz, Rhineland-Palatinate, WHU, Mainz]
+    feeds:
+      - https://rss.dw.com/rdf/rss-en-ger
+      - https://www.thelocal.de/feeds/rss.php
+      - https://www.spiegel.de/international/index.rss
+      - https://www.tagesschau.de/xml/rss2/
+      - https://www.swr.de/swraktuell/rheinland-pfalz/koblenz/index~rss2.xml
+      - https://www.swr.de/swraktuell/rheinland-pfalz/index~rss2.xml
+
+  - slug: politics
+    name: Politics
+    emoji: "🏛️"
+    focus: US, Indian, German, European, British and international politics and elections.
+    feeds:
+      - https://rss.politico.com/politics-news.xml
+      - https://www.politico.eu/feed/
+      - https://feeds.bbci.co.uk/news/politics/rss.xml
+      - https://www.theguardian.com/politics/rss
+      - https://www.theguardian.com/us-news/us-politics/rss
+      - https://www.thehindu.com/news/national/feeder/default.rss
+      - https://rss.dw.com/rdf/rss-en-eu
+
+  - slug: sports
+    name: Sports
+    emoji: "⚽"
+    focus: Football, cricket, F1, tennis, badminton, NBA, NFL and other major sport.
+    feeds:
+      - https://feeds.bbci.co.uk/sport/football/rss.xml
+      - https://feeds.bbci.co.uk/sport/cricket/rss.xml
+      - https://feeds.bbci.co.uk/sport/formula1/rss.xml
+      - https://feeds.bbci.co.uk/sport/tennis/rss.xml
+      - https://www.espncricinfo.com/rss/content/story/feeds/0.xml
+      - https://www.espn.com/espn/rss/nba/news
+      - https://www.espn.com/espn/rss/nfl/news
+      - https://www.theguardian.com/football/rss
+      - https://www.thehindu.com/sport/other-sports/feeder/default.rss
+
+  - slug: business
+    name: Business & Economics
+    emoji: "💼"
+    focus: Global companies, financial markets, corporate strategy, central banks and the economy.
+    feeds:
+      - https://feeds.bbci.co.uk/news/business/rss.xml
+      - https://www.cnbc.com/id/10001147/device/rss/rss.html
+      - https://www.theguardian.com/business/rss
+      - https://www.economist.com/business/rss.xml
+      - https://www.economist.com/finance-and-economics/rss.xml
+      - https://economictimes.indiatimes.com/rssfeedstopstories.cms
+
+  - slug: technology
+    name: Technology
+    emoji: "🤖"
+    focus: AI, big tech, startups, chips, cybersecurity and emerging technology.
+    feeds:
+      - https://feeds.arstechnica.com/arstechnica/index
+      - https://www.theverge.com/rss/index.xml
+      - https://techcrunch.com/feed/
+      - https://www.technologyreview.com/feed/
+      - https://www.wired.com/feed/rss
+      - https://hnrss.org/frontpage?points=250
+
+  - slug: science
+    name: Science
+    emoji: "🔬"
+    focus: Scientific discoveries, space, medicine, climate and research.
+    feeds:
+      - https://www.sciencedaily.com/rss/top/science.xml
+      - https://www.nature.com/nature.rss
+      - https://feeds.bbci.co.uk/news/science_and_environment/rss.xml
+      - https://www.nasa.gov/news-release/feed/
+      - https://www.newscientist.com/feed/home/
+      - https://www.quantamagazine.org/feed/
+
+  - slug: entertainment
+    name: Entertainment & Culture
+    emoji: "🎬"
+    focus: Film, television, Indian cinema, music, books and major cultural moments.
+    feeds:
+      - https://variety.com/feed/
+      - https://www.hollywoodreporter.com/feed/
+      - https://www.theguardian.com/culture/rss
+      - https://www.hindustantimes.com/feeds/rss/entertainment/bollywood/rssfeed.xml
+      - https://www.thehindu.com/entertainment/movies/feeder/default.rss
+      - https://feeds.bbci.co.uk/news/entertainment_and_arts/rss.xml
+
+  # Built from the business, world, politics and technology pools rather than
+  # its own feeds, plus a few strategy sources.
+  - slug: interview
+    name: Interview Intelligence
+    emoji: "🎯"
+    derived_from: [business, world, politics, technology]
+    focus: >-
+      Developments a consulting, strategy or business interviewer may bring up:
+      industry shifts, M&A, regulation, supply chains, market entry, pricing
+      power, geopolitics affecting companies. Frame each with a consulting lens.
+    feeds:
+      - https://feeds.hbr.org/harvardbusiness
+      - https://www.economist.com/the-world-this-week/rss.xml
+
+# Defaults for "My Newspaper" until you save your own. weight: 0 (hide) … 3 (most)
+default_prefs:
+  categories:
+    world:         {weight: 2, depth: brief}
+    india:         {weight: 3, depth: brief}
+    germany:       {weight: 3, depth: brief}
+    politics:      {weight: 3, depth: brief}
+    sports:        {weight: 2, depth: headlines}
+    business:      {weight: 3, depth: deep}
+    technology:    {weight: 2, depth: brief}
+    science:       {weight: 1, depth: headlines}
+    entertainment: {weight: 1, depth: headlines}
+    interview:     {weight: 3, depth: deep}
+  countries: [India, Germany, United States, United Kingdom, European Union]
+  industries: [Technology, Consulting, Financial services, Automotive, Energy]
+  sports: [Football, Cricket, Formula 1, Tennis]
+  teams: [India (cricket), Germany (football), Bayern Munich]
+  leagues: [Premier League, Bundesliga, Champions League, IPL, Formula 1]
+  interview_roles: [Strategy consultant, Business analyst, Product manager]
+  extra_interests: ""
+
+# Scores & fixtures. football-data.org needs a free key (FOOTBALL_DATA_TOKEN);
+# the others need none. Each provider can be switched off.
+sports:
+  football_data:
+    enabled: true
+    competitions: [PL, BL1, CL, PD, SA, FL1, EC, WC]   # free-tier competitions
+  f1:
+    enabled: true             # api.jolpi.ca (open Ergast-compatible API)
+  espn:
+    enabled: true             # ESPN's public scoreboard JSON (unofficial; disable if you prefer)
+    leagues:
+      - {sport: basketball, league: nba, label: NBA}
+      - {sport: football, league: nfl, label: NFL}
+      - {sport: soccer, league: ind.1, label: Indian Super League}
+  cricket:
+    enabled: true             # cricketdata.org, needs CRICKET_API_KEY (free 100 calls/day)
