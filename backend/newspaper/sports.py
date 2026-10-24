@@ -150,7 +150,7 @@ def thesportsdb(settings: Settings, now: datetime) -> list[dict]:
                     f"tsdb:{ev['idEvent']}", lg.sport, lg.label, starts, status,
                     ev.get("strHomeTeam") or ev.get("strEvent") or "TBD", ev.get("strAwayTeam") or "",
                     score(ev.get("intHomeScore")), score(ev.get("intAwayScore")),
-                    ev.get("strResult") or (ev.get("strStatus") or "")[:80],
+                    {"finished": "FT"}.get(status, "") if (ev.get("strStatus") or "").lower() in ("match finished", "ft", "") else (ev.get("strStatus") or "")[:40],
                 ))
     return events
 
